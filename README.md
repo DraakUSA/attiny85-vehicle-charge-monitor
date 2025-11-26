@@ -9,7 +9,7 @@ The circuit uses a voltage divider calibrated for safe input up to 20V.
 ## ✨ Features
 
 * **Dual Mode Display:** Clearly separates the Charging State (Mode 2) from the Battery State (Mode 1).
-* **Voltage Divider:** Calibrated for safe measurement up to 20V (using 15kΩ and 5kΩ resistors).
+* **Voltage Divider:** Calibrated for safe measurement up to 20V (using 15k and 5k resistors).
 * **High-Alert Flashing:** Implements slow, fast, and alternating Red/Green flashing for critical alerts.
 * **Low Power:** Ideal for permanent installation in a vehicle dashboard or control panel.
 
@@ -24,9 +24,9 @@ The circuit uses a voltage divider calibrated for safe input up to 20V.
 | Microcontroller | **ATtiny85** |
 | LEDs | 2 x **Bi-Color LEDs** (Red/Green, Common Cathode Recommended) |
 | Voltage Regulator | **7805** or equivalent DC-DC buck converter |
-| **R1 (Voltage Divider)** | **15 k$\Omega$** |
-| **R2 (Voltage Divider)** | **5 k$\Omega$** |
-| Current Limit Resistors | 4 x **220 $\Omega$** (for LEDs) |
+| **R1 (Voltage Divider)** | **15k Ohm** |
+| **R2 (Voltage Divider)** | **5k Ohm** |
+| Current Limit Resistors | 4 x **220 Ohm** (for LEDs) |
 
 ### 2. Pinout and Connections
 
@@ -34,12 +34,12 @@ The analog input is calibrated for a **VCC = 5.0V** reference. The code uses the
 
 | Function | ATtiny Pin | Arduino Pin No. | Connection |
 | :--- | :--- | :--- | :--- |
-| Voltage Input | **PB2** | **A1 (Pin 7)** | Output of the 15k$\Omega$ / 5k$\Omega$ voltage divider. |
-| LED 1 (Charge) Red | **PB0** | **0 (Pin 5)** | To Red pin of LED 1 (via $220\Omega$ resistor). |
-| LED 1 (Charge) Green | **PB1** | **1 (Pin 6)** | To Green pin of LED 1 (via $220\Omega$ resistor). |
-| LED 2 (Battery) Red | **PB3** | **3 (Pin 2)** | To Red pin of LED 2 (via $220\Omega$ resistor). |
-| LED 2 (Battery) Green | **PB4** | **4 (Pin 3)** | To Green pin of LED 2 (via $220\Omega$ resistor). |
-| Ground | GND | GND | Connects to Vehicle GND, $R_2$, and LED Cathodes. |
+| Voltage Input | **PB2** | **A1 (Pin 7)** | Output of the 15k / 5k voltage divider. |
+| LED 1 (Charge) Red | **PB0** | **0 (Pin 5)** | To Red pin of LED 1 (via 220 Ohm resistor). |
+| LED 1 (Charge) Green | **PB1** | **1 (Pin 6)** | To Green pin of LED 1 (via 220 Ohm resistor). |
+| LED 2 (Battery) Red | **PB3** | **3 (Pin 2)** | To Red pin of LED 2 (via 220 Ohm resistor). |
+| LED 2 (Battery) Green | **PB4** | **4 (Pin 3)** | To Green pin of LED 2 (via 220 Ohm resistor). |
+| Ground | GND | GND | Connects to Vehicle GND, R2, and LED Cathodes. |
 
 ---
 
@@ -78,7 +78,8 @@ const float V_YELLOW      = 11.8;
 
 void loop() {
   // 1. Calculate Voltage
-  float voltage = (float)analogRead(A1) / 1023.0 * 5.0 / 0.25;
+  // R_RATIO = 0.25 for 15k and 5k resistors
+  float voltage = (float)analogRead(A1) / 1023.0 * 5.0 / 0.25; 
   
   // 2. Reset LEDs (Critical for flashing states)
   setLED(LED1_RED_PIN, LED1_GRN_PIN, LOW, LOW); 
