@@ -4,12 +4,14 @@ A compact, ATtiny85-based voltage monitoring circuit designed to monitor a vehic
 
 The circuit uses a voltage divider calibrated for safe input up to 20V.
 
+See the original Gammatronix "J" monitor product page: [Gammatronix "J" monitor](https://gammatronixltd.com/epages/bae94c71-c5b6-4572-89a1-e89006e78fbe.sf/en_GB/?ObjectPath=/Shops/bae94c71-c5b6-4572-89a1-e89006e78fbe/Products/J)
+
 ---
 
 ## ✨ Features
 
 * **Dual Mode Display:** Clearly separates the Charging State (Mode 2) from the Battery State (Mode 1).
-* **Voltage Divider:** Calibrated for safe measurement up to 20V (using 15k and 5k resistors).
+* **Voltage Divider:** Calibrated for safe measurement up to 20V (using 30k and 10k resistors).
 * **High-Alert Flashing:** Implements slow, fast, and alternating Red/Green flashing for critical alerts.
 * **Low Power:** Ideal for permanent installation in a vehicle dashboard or control panel.
 
@@ -24,8 +26,8 @@ The circuit uses a voltage divider calibrated for safe input up to 20V.
 | Microcontroller | **ATtiny85** |
 | LEDs | 2 x **Bi-Color LEDs** (Red/Green, Common Cathode Recommended) |
 | Voltage Regulator | **7805** or equivalent DC-DC buck converter |
-| **R1 (Voltage Divider)** | **15k Ohm** |
-| **R2 (Voltage Divider)** | **5k Ohm** |
+| **R1 (Voltage Divider)** | **30k Ohm** |
+| **R2 (Voltage Divider)** | **10k Ohm** |
 | Current Limit Resistors | 4 x **220 Ohm** (for LEDs) |
 
 ### 2. Pinout and Connections
@@ -34,7 +36,7 @@ The analog input is calibrated for a **VCC = 5.0V** reference. The code uses the
 
 | Function | ATtiny Pin | Arduino Pin No. | Connection |
 | :--- | :--- | :--- | :--- |
-| Voltage Input | **PB2** | **A1 (Pin 7)** | Output of the 15k / 5k voltage divider. |
+| Voltage Input | **PB2** | **A1 (Pin 7)** | Output of the 30k / 10k voltage divider. |
 | LED 1 (Charge) Red | **PB0** | **0 (Pin 5)** | To Red pin of LED 1 (via 220 Ohm resistor). |
 | LED 1 (Charge) Green | **PB1** | **1 (Pin 6)** | To Green pin of LED 1 (via 220 Ohm resistor). |
 | LED 2 (Battery) Red | **PB3** | **3 (Pin 2)** | To Red pin of LED 2 (via 220 Ohm resistor). |
@@ -57,10 +59,10 @@ The code implements a mutually exclusive logic based on the $13.2V$ charging thr
 | **$12.1V \to 13.2V$** | **LED 2** | Solid Green | Healthy Battery (Engine OFF / Standby) |
 | **$11.8V \to 12.1V$** | **LED 2** | Solid Yellow/Orange | Battery Discharge Warning (Mode 1 Yellow) |
 | **$11.5V \to 11.8V$** | **LED 2** | Yellow/Orange Flash (Slow) | Low Battery Capacity Warning |
-| **$11.2V \to 11.5V$** | **LED 2** | **Alternating Yellow/Red Flash (Fast)** | **Critical Low Voltage** |
-| **$11.0V \to 11.2V$** | **LED 2** | **Solid Red** | Battery Discharged / Near Dead |
-| **$10.7V \to 11.0V$** | **LED 2** | **Red Flash (Slow)** | Dangerously Low Battery |
-| **$< 10.7V$** | **LED 2** | **Red Flash (Fast)** | **Emergency Stop / System Voltage Too Low** |
+| **$11.2V \to 11.5V$** | **LED 2** | Alternating Yellow/Red Flash (Fast) | **Critical Low Voltage** |
+| **$11.0V \to 11.2V$** | **LED 2** | Solid Red | Battery Discharged / Near Dead |
+| **$10.7V \to 11.0V$** | **LED 2** | Red Flash (Slow) | Dangerously Low Battery |
+| **$< 10.7V$** | **LED 2** | Red Flash (Fast) | **Emergency Stop / System Voltage Too Low** |
 
 ---
 
