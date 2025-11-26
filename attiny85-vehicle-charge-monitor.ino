@@ -15,20 +15,40 @@ const float V_CHARGING_OK = 13.2;
 const float V_BATT_GREEN  = 12.1; 
 const float V_YELLOW      = 11.8; 
 const float V_YELLOW_FLASH= 11.5; 
-const float V_ALT_YEL_RED = 11.2;    // Threshold for the new Alternating Yellow/Red flash
-const float V_RED_SOLID   = 11.0;    // Threshold for the new Solid Red
-const float V_RED_FLASH   = 10.7;    // Threshold for the new Slow Red flash
-// < 10.7V is now the Fast Red Flash state
+const float V_ALT_YEL_RED = 11.2;    // Alternating Yellow/Red flash
+const float V_RED_SOLID   = 11.0;    // Solid Red
+const float V_RED_FLASH   = 10.7;    // Slow Red flash
 
 // --- Flashing Durations (in milliseconds) ---
 const int SLOW_FLASH_RATE = 500; 
 const int FAST_FLASH_RATE = 200; 
 
+// ====================================================================
+// --- AVERAGING FILTER VARIABLES ---
+// ====================================================================
+const int WINDOW_SIZE = 10;
+int readings[WINDOW_SIZE]; // The array to store the last N readings
+long total = 0;            // The sum of all readings in the array
+int readIndex = 0;         // The index of the current reading (where the next one goes)
+// ====================================================================
+
+
 void setup() {
+  // Set all LED pins as outputs
   pinMode(LED1_RED_PIN, OUTPUT);
   pinMode(LED1_GRN_PIN, OUTPUT);
   pinMode(LED2_RED_PIN, OUTPUT);
   pinMode(LED2_GRN_PIN, OUTPUT);
+
+  // --- PRE-FILL THE AVERAGING ARRAY ---
+  // 1. Take a clean initial reading
+  int initialReading = analogRead(VOLTAGE_IN_PIN);
+  
+  // 2. Populate every slot with the initial reading and set the total
+  for (int i = 0; i < WINDOW_SIZE; i++) {
+    readings[i] = initialReading;
+    total += initialReading;
+  }
 }
 
 // Helper function to set LED color
@@ -48,8 +68,30 @@ bool isFastFlash() {
 }
 
 void loop() {
-  int adcValue = analogRead(VOLTAGE_IN_PIN);
-  float voltage = (float)adcValue / ADC_MAX * 5.0 / R_RATIO;
+  // ====================================================================
+  // 1. RUNNING AVERAGE CALCULATION
+  // ====================================================================
+  // Subtract the oldest reading from the total
+  total = total - readings[readIndex];
+  
+  // Read the new ADC value
+  int newReading = analogRead(VOLTAGE_IN_PIN);
+  
+  // Store the new reading in the array
+  readings[readIndex] = newReading;
+  
+  // Add the new reading to the total
+  total = total + newReading;
+  
+  // Advance the index (and wrap around when reaching the end of the array)
+  readIndex = (readIndex + 1) % WINDOW_SIZE;
+  
+  // Calculate the average ADC value
+  float averageADC = (float)total / WINDOW_SIZE;
+  
+  // Convert the average ADC value to the actual voltage
+  float averageVoltage = averageADC / ADC_MAX * 5.0 / R_RATIO;
+  // ====================================================================
   
   // --- Reset both LEDs (Critical for flashing to work) ---
   setLED(LED1_RED_PIN, LED1_GRN_PIN, LOW, LOW); 
@@ -57,11 +99,12 @@ void loop() {
   
   
   // ====================================================================
-  // 1. CHARGING MODE (MODE 2): Active when voltage is high (LED 1)
+  // 2. CHARGING MODE (MODE 2): Active when voltage is high (LED 1)
+  // Logic uses the stable 'averageVoltage'
   // ====================================================================
-  if (voltage >= V_CHARGING_OK) {
+  if (averageVoltage >= V_CHARGING_OK) {
     
-    if (voltage > V_OVER_CHARGE) {
+    if (averageVoltage > V_OVER_CHARGE) {
       // Over-Voltage (> 15.2V): Alternating Red and Green Flash
       if (isFastFlash()) {
         setLED(LED1_RED_PIN, LED1_GRN_PIN, HIGH, LOW); 
@@ -77,51 +120,50 @@ void loop() {
   } 
   
   // ====================================================================
-  // 2. BATTERY MONITOR MODE (MODE 1): Active when voltage is low (LED 2)
+  // 3. BATTERY MONITOR MODE (MODE 1): Active when voltage is low (LED 2)
+  // Logic uses the stable 'averageVoltage'
   // ====================================================================
   else {
     
-    if (voltage >= V_BATT_GREEN) {
+    if (averageVoltage >= V_BATT_GREEN) {
       // Healthy Battery (12.1V - 13.2V): Solid Green
       setLED(LED2_RED_PIN, LED2_GRN_PIN, LOW, HIGH); 
       
-    } else if (voltage >= V_YELLOW) {
+    } else if (averageVoltage >= V_YELLOW) {
       // Yellow (11.8V - 12.1V): Solid Yellow/Orange
       setLED(LED2_RED_PIN, LED2_GRN_PIN, 255, 100); 
       
-    } else if (voltage >= V_YELLOW_FLASH) {
+    } else if (averageVoltage >= V_YELLOW_FLASH) {
       // Yellow Flash (11.5V - 11.8V): Flashing Yellow/Orange
       if (isSlowFlash()) {
         setLED(LED2_RED_PIN, LED2_GRN_PIN, 255, 100); 
       }
       
-    } else if (voltage >= V_ALT_YEL_RED) {
-      // NEW STATE: Alternating Yellow/Red Flash (11.2V - 11.5V)
+    } else if (averageVoltage >= V_ALT_YEL_RED) {
+      // Alternating Yellow/Red Flash (11.2V - 11.5V)
       if (isFastFlash()) {
-        // Red ON, Yellow OFF (Red + Low Green)
         setLED(LED2_RED_PIN, LED2_GRN_PIN, HIGH, LOW); 
       } else {
-        // Yellow ON (Red + Green/low)
         setLED(LED2_RED_PIN, LED2_GRN_PIN, 255, 100);
       }
       
-    } else if (voltage >= V_RED_SOLID) {
-      // NEW STATE: Solid Red (11.0V - 11.2V)
+    } else if (averageVoltage >= V_RED_SOLID) {
+      // Solid Red (11.0V - 11.2V)
       setLED(LED2_RED_PIN, LED2_GRN_PIN, HIGH, LOW);
       
-    } else if (voltage >= V_RED_FLASH) {
-      // NEW STATE: Slow Flashing Red (10.7V - 11.0V)
+    } else if (averageVoltage >= V_RED_FLASH) {
+      // Slow Flashing Red (10.7V - 11.0V)
       if (isSlowFlash()) {
         setLED(LED2_RED_PIN, LED2_GRN_PIN, HIGH, LOW);
       }
       
     } else {
-      // NEW STATE: Fast Flashing Red (< 10.7V)
+      // Fast Flashing Red (< 10.7V)
       if (isFastFlash()) {
         setLED(LED2_RED_PIN, LED2_GRN_PIN, HIGH, LOW);
       }
     }
   }
 
-  delay(100); 
+  delay(100); // Short delay for continuous monitoring
 }
