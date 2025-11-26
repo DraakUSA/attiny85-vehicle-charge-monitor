@@ -50,17 +50,17 @@ The code implements a mutually exclusive logic based on the $13.2V$ charging thr
 * **LED 1 (Charging Indicator)** is active when $\mathbf{Voltage \ge 13.2V}$ (Mode 2).
 * **LED 2 (Battery Monitor)** is active when $\mathbf{Voltage < 13.2V}$ (Mode 1).
 
-| Voltage Range (V) | Active LED | State | Meaning (Gammatronix Emulation) |
+| Voltage Range (V) | Active LED | State (LED Action) | Meaning (Gammatronix Emulation) |
 | :--- | :--- | :--- | :--- |
-| **$> 15.2V$** | **LED 1** | **Alternating R/G Flash** (Fast) | **Over-Voltage Warning / Alternator Fault** |
+| **$> 15.2V$** | **LED 1** | Alternating R/G Flash (Fast) | **Over-Voltage Warning / Alternator Fault** |
 | **$13.2V \to 15.2V$** | **LED 1** | Solid Green | Normal Charging (Alternator OK) |
 | **$12.1V \to 13.2V$** | **LED 2** | Solid Green | Healthy Battery (Engine OFF / Standby) |
 | **$11.8V \to 12.1V$** | **LED 2** | Solid Yellow/Orange | Battery Discharge Warning (Mode 1 Yellow) |
 | **$11.5V \to 11.8V$** | **LED 2** | Yellow/Orange Flash (Slow) | Low Battery Capacity Warning |
-| **$11.2V \to 11.5V$** | **LED 2** | Solid Red | Critical Low Voltage |
-| **$11.0V \to 11.2V$** | **LED 2** | Red Flash (Slow) | Battery Discharged / Near Dead |
-| **$10.7V \to 11.0V$** | **LED 2** | Red Flash (Fast) | **Emergency Stop** (Dangerously low voltage) |
-| **$< 10.7V$** | **LED 2** | Solid Red | System voltage too low to operate reliably. |
+| **$11.2V \to 11.5V$** | **LED 2** | **Alternating Yellow/Red Flash (Fast)** | **Critical Low Voltage** |
+| **$11.0V \to 11.2V$** | **LED 2** | **Solid Red** | Battery Discharged / Near Dead |
+| **$10.7V \to 11.0V$** | **LED 2** | **Red Flash (Slow)** | Dangerously Low Battery |
+| **$< 10.7V$** | **LED 2** | **Red Flash (Fast)** | **Emergency Stop / System Voltage Too Low** |
 
 ---
 
@@ -88,10 +88,8 @@ void loop() {
   // 3. Mutually Exclusive Logic
   if (voltage >= V_CHARGING_OK) {
     // LED 1 (Charging Mode) Logic runs here...
-    // Includes Alternating R/G Flash for V > 15.2V
   } else {
     // LED 2 (Battery Mode) Logic runs here...
-    // Includes all Green, Yellow, and Red/Flashing states below 13.2V
   }
 
   delay(100); 
