@@ -42,6 +42,7 @@ The analog input is calibrated for a **VCC = 5.0V** reference. The code uses the
 | LED 2 (Battery) Red | **PB3** | **3 (Pin 2)** | To Red pin of LED 2 (via 220 Ohm resistor). |
 | LED 2 (Battery) Green | **PB4** | **4 (Pin 3)** | To Green pin of LED 2 (via 220 Ohm resistor). |
 | Ground | GND | GND | Connects to Vehicle GND, R2, and LED Cathodes. |
+| Reset / Programming | **PB5** | **5 (Pin 1)** | Reset line; connected to VCC via a 10k pull-up resistor; used for ISP/programming (do not hold low during normal operation). |
 
 ---
 
