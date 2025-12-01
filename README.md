@@ -50,10 +50,10 @@ The analog input is calibrated for a **VCC = 5.0V** reference. The code uses the
 
 ## 🎯 Operational Logic and Thresholds
 
-The code implements a mutually exclusive logic based on the $13.2V$ charging threshold:
+The code implements a mutually exclusive logic based on the $13.5V$ charging threshold:
 
-* **LED 1 (Charging Indicator)** is active when $\mathbf{Voltage \ge 13.2V}$ (Mode 2).
-* **LED 2 (Battery Monitor)** is active when $\mathbf{Voltage < 13.2V}$ (Mode 1).
+* **LED 1 (Charging Indicator)** is active when $\mathbf{Voltage \ge 13.5V}$ (Mode 2).
+* **LED 2 (Battery Monitor)** is active when $\mathbf{Voltage < 13.5V}$ (Mode 1).
 
 **Configuration Notes:**
 - Voltage thresholds are calibrated based on Gammatronix reference behavior but customized for this implementation.
@@ -65,6 +65,7 @@ The code implements a mutually exclusive logic based on the $13.2V$ charging thr
 | **$> 15.0V$** | **LED 1** | Alternating R/G Flash (Fast) | **Over-Voltage Warning / Alternator Fault** |
 | **$14.8V \to 15.0V$** | **LED 1** | Alternating Yellow/Green (Slow) | High-charge band — elevated alternator output |
 | **$13.5V \to 14.8V$** | **LED 1** | Solid Green | Normal Charging (Alternator OK) |
+| **$12.6V \to 13.5V$** | **LED 1** | Slow Green Flash | Low-charge indication (LED1 slow green flash when voltage is between `V_LOW_CHARGE` and the charging threshold; may appear alongside LED2 indications) |
 | **$12.8V \to 13.5V$** | **LED 2** | Solid Green (MODE 5) / Solid Green (MODE 1 for 12.1V+) | Battery healthy (MODE 5 shows solid green in this top band) |
 | **$12.5V \to 12.8V$** | **LED 2** | Slow Green Flash (MODE 5) | MODE 5: slow green flash band |
 | **$12.1V \to 12.5V$** | **LED 2** | Fast Green Flash (MODE 5) / Solid Green (MODE 1) | MODE 5: fast green flash; MODE 1: solid green (12.1V+) |
@@ -86,6 +87,7 @@ The code uses the `analogRead()` and `analogWrite()` functions along with the `m
 const float V_OVER_CHARGE = 15.0;
 const float V_HIGH_CHARGE = 14.8;
 const float V_CHARGING_OK = 13.5;
+const float V_LOW_CHARGE  = 12.6;
 const float V_BATT_GREEN  = 12.1;
 // MODE 5 green thresholds (if enabled via LED2_MODE):
 // solid >= 12.8, slow flash >= 12.5, fast flash >= 12.1
