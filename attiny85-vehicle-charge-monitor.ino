@@ -25,7 +25,7 @@ const float ADC_MAX = 1023.0;
 const float V_OVER_CHARGE = 15.0;
 const float V_HIGH_CHARGE = 14.8;
 const float V_CHARGING_OK = 13.5;
-const float V_LOW_CHARGE  = 12.6;
+const float V_LOW_CHARGE  = 12.8;
 // Battery voltages
 const float V_BATT_GREEN  = 12.1;
 const float V_YELLOW      = 11.8;
