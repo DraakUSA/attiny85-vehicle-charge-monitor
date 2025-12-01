@@ -25,6 +25,7 @@ const float ADC_MAX = 1023.0;
 const float V_OVER_CHARGE = 15.0;
 const float V_HIGH_CHARGE = 14.8;
 const float V_CHARGING_OK = 13.5;
+const float V_LOW_CHARGE  = 12.6;
 // Battery voltages
 const float V_BATT_GREEN  = 12.1;
 const float V_YELLOW      = 11.8;
@@ -214,6 +215,14 @@ void loop() {
   // ====================================================================
   else {
 
+    // --- LOW CHARGE INDICATION (LED 1) ---
+    if (averageVoltage >= V_LOW_CHARGE) {
+      if (isSlowFlash()) {
+        setLED(LED1_RED_PIN, LED1_GRN_PIN, LOW, HIGH);
+      }
+    }
+
+    // Battery Voltage Indication (LED 2)
     if (averageVoltage >= V_BATT_GREEN) {
       if (LED2_MODE == 5) {
         // --- MODE 5: Gammatronix Green Flashing System ---
@@ -235,7 +244,7 @@ void loop() {
         }
 
       } else {
-        // Healthy Battery (12.1V - 13.2V): Solid Green
+        // Healthy Battery (12.1V - 13.5V): Solid Green
         setLED(LED2_RED_PIN, LED2_GRN_PIN, LOW, HIGH);
       }
 
