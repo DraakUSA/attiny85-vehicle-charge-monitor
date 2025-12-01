@@ -4,6 +4,8 @@ A compact, ATtiny85-based voltage monitoring circuit designed to monitor a vehic
 
 The circuit uses a voltage divider calibrated for safe input up to 20V.
 
+> ⚠️ **Note:** The voltage thresholds and LED indications are based on Gammatronix reference values but are **not exact replicas**. They are calibrated for typical automotive use and may differ from the original Gammatronix monitor.
+
 See the original Gammatronix "J" monitor product page: [Gammatronix "J" monitor](https://gammatronixltd.com/epages/bae94c71-c5b6-4572-89a1-e89006e78fbe.sf/en_GB/?ObjectPath=/Shops/bae94c71-c5b6-4572-89a1-e89006e78fbe/Products/J)
 
 ---
@@ -53,11 +55,19 @@ The code implements a mutually exclusive logic based on the $13.2V$ charging thr
 * **LED 1 (Charging Indicator)** is active when $\mathbf{Voltage \ge 13.2V}$ (Mode 2).
 * **LED 2 (Battery Monitor)** is active when $\mathbf{Voltage < 13.2V}$ (Mode 1).
 
+**Configuration Notes:**
+- Voltage thresholds are calibrated based on Gammatronix reference behavior but customized for this implementation.
+- LED2 can operate in **MODE 1** (default, yellow/red thresholds) or **MODE 5** (green flash thresholds). Set `LED2_MODE` constant in the code to select.
+- All threshold values are user-adjustable in the source code for fine-tuning to specific vehicle requirements.
+
 | Voltage Range (V) | Active LED | State (LED Action) | Meaning (Gammatronix Emulation) |
 | :--- | :--- | :--- | :--- |
-| **$> 15.2V$** | **LED 1** | Alternating R/G Flash (Fast) | **Over-Voltage Warning / Alternator Fault** |
-| **$13.2V \to 15.2V$** | **LED 1** | Solid Green | Normal Charging (Alternator OK) |
-| **$12.1V \to 13.2V$** | **LED 2** | Solid Green | Healthy Battery (Engine OFF / Standby) |
+| **$> 15.0V$** | **LED 1** | Alternating R/G Flash (Fast) | **Over-Voltage Warning / Alternator Fault** |
+| **$14.8V \to 15.0V$** | **LED 1** | Alternating Yellow/Green (Slow) | High-charge band — elevated alternator output |
+| **$13.5V \to 14.8V$** | **LED 1** | Solid Green | Normal Charging (Alternator OK) |
+| **$12.8V \to 13.5V$** | **LED 2** | Solid Green (MODE 5) / Solid Green (MODE 1 for 12.1V+) | Battery healthy (MODE 5 shows solid green in this top band) |
+| **$12.5V \to 12.8V$** | **LED 2** | Slow Green Flash (MODE 5) | MODE 5: slow green flash band |
+| **$12.1V \to 12.5V$** | **LED 2** | Fast Green Flash (MODE 5) / Solid Green (MODE 1) | MODE 5: fast green flash; MODE 1: solid green (12.1V+) |
 | **$11.8V \to 12.1V$** | **LED 2** | Solid Yellow/Orange | Battery Discharge Warning (Mode 1 Yellow) |
 | **$11.5V \to 11.8V$** | **LED 2** | Yellow/Orange Flash (Slow) | Low Battery Capacity Warning |
 | **$11.2V \to 11.5V$** | **LED 2** | Alternating Yellow/Red Flash (Fast) | **Critical Low Voltage** |
@@ -73,21 +83,27 @@ The code uses the `analogRead()` and `analogWrite()` functions along with the `m
 
 ```cpp
 // --- Voltage thresholds (in Volts) ---
-const float V_OVER_CHARGE = 15.2; 
-const float V_CHARGING_OK = 13.2; 
-const float V_BATT_GREEN  = 12.1; 
-const float V_YELLOW      = 11.8; 
+const float V_OVER_CHARGE = 15.0;
+const float V_HIGH_CHARGE = 14.8;
+const float V_CHARGING_OK = 13.5;
+const float V_BATT_GREEN  = 12.1;
+// MODE 5 green thresholds (if enabled via LED2_MODE):
+// solid >= 12.8, slow flash >= 12.5, fast flash >= 12.1
+const float V_MODE5_GREEN_SOLID = 12.8;
+const float V_MODE5_GREEN_SLOW_FLASH = 12.5;
+const float V_MODE5_GREEN_FAST_FLASH = 12.1;
+const float V_YELLOW      = 11.8;
 // ... (All other constants defined in the full code) ...
 
 void loop() {
   // 1. Calculate Voltage
   // R_RATIO = 0.25 for 15k and 5k resistors
-  float voltage = (float)analogRead(A1) / 1023.0 * 5.0 / 0.25; 
-  
+  float voltage = (float)analogRead(A1) / 1023.0 * 5.0 / 0.25;
+
   // 2. Reset LEDs (Critical for flashing states)
-  setLED(LED1_RED_PIN, LED1_GRN_PIN, LOW, LOW); 
-  setLED(LED2_RED_PIN, LED2_GRN_PIN, LOW, LOW); 
-  
+  setLED(LED1_RED_PIN, LED1_GRN_PIN, LOW, LOW);
+  setLED(LED2_RED_PIN, LED2_GRN_PIN, LOW, LOW);
+
   // 3. Mutually Exclusive Logic
   if (voltage >= V_CHARGING_OK) {
     // LED 1 (Charging Mode) Logic runs here...
@@ -95,5 +111,5 @@ void loop() {
     // LED 2 (Battery Mode) Logic runs here...
   }
 
-  delay(100); 
+  delay(100);
 }
