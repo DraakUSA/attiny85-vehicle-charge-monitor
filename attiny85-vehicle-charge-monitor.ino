@@ -21,14 +21,31 @@ const float R_RATIO = 0.25;
 const float ADC_MAX = 1023.0;
 
 // Voltage thresholds (in Volts) - These are based on the original Gammatronix map
-const float V_OVER_CHARGE = 15.2;
-const float V_CHARGING_OK = 13.2;
+// Charging voltages
+const float V_OVER_CHARGE = 15.0;
+const float V_HIGH_CHARGE = 14.8;
+const float V_CHARGING_OK = 13.5;
+// Battery voltages
 const float V_BATT_GREEN  = 12.1;
 const float V_YELLOW      = 11.8;
 const float V_YELLOW_FLASH= 11.5;
 const float V_ALT_YEL_RED = 11.2;    // Alternating Yellow/Red flash
 const float V_RED_SOLID   = 11.0;    // Solid Red
 const float V_RED_FLASH   = 10.7;    // Slow Red flash
+
+// --- Battery LED Mode Selection ---
+// Set to 1 for MODE 1 (original: Yellow/Red thresholds)
+// Set to 5 for MODE 5 (Gammatronix: Green flash thresholds)
+const int LED2_MODE = 1;  // Change to 5 for MODE 5 behavior
+
+// --- MODE 5 Green Thresholds (Gammatronix 6-mode system) ---
+// MODE 5 mapping:
+//  - >= 12.8V : Solid Green
+//  - >= 12.5V : Slow Green Flash
+//  - >= 12.1V : Fast Green Flash
+const float V_MODE5_GREEN_SOLID = 12.8;       // Solid green at/above 12.8V
+const float V_MODE5_GREEN_SLOW_FLASH = 12.5;  // Slow green flash from 12.5V up to <12.8V
+const float V_MODE5_GREEN_FAST_FLASH = 12.1;  // Fast green flash from 12.1V up to <12.5V
 
 // --- Flashing Durations (in milliseconds) ---
 const int SLOW_FLASH_RATE = 500;
@@ -168,29 +185,59 @@ void loop() {
   if (averageVoltage >= V_CHARGING_OK) {
 
     if (averageVoltage > V_OVER_CHARGE) {
-      // Over-Voltage (> 15.2V): Alternating Red and Green Flash
+      // Over-Voltage (> 15.0V): Alternating Red and Green Flash
       if (isFastFlash()) {
         setLED(LED1_RED_PIN, LED1_GRN_PIN, HIGH, LOW);
       } else {
         setLED(LED1_RED_PIN, LED1_GRN_PIN, LOW, HIGH);
       }
 
+    } else if (averageVoltage > V_HIGH_CHARGE) {
+      // High Charging (14.8V - 15.0V): Alternating Yellow/Green Flash
+      if (isSlowFlash()) {
+        setLED(LED1_RED_PIN, LED1_GRN_PIN, YELLOW_R, YELLOW_G);
+      } else {
+        setLED(LED1_RED_PIN, LED1_GRN_PIN, LOW, HIGH);
+      }
+
     } else {
-      // Normal Charging (13.2V - 15.2V): Solid Green
+      // Normal Charging (13.5V - 14.8V): Solid Green
       setLED(LED1_RED_PIN, LED1_GRN_PIN, LOW, HIGH);
     }
 
   }
 
   // ====================================================================
-  // 3. BATTERY MONITOR MODE (MODE 1): Active when voltage is low (LED 2)
+  // 3. BATTERY MONITOR MODE: Active when voltage is low (LED 2)
   // Logic uses the stable 'averageVoltage'
+  // Selectable between MODE 1 (Solid green) and MODE 5 (Detailed green flash)
   // ====================================================================
   else {
 
     if (averageVoltage >= V_BATT_GREEN) {
-      // Healthy Battery (12.1V - 13.2V): Solid Green
-      setLED(LED2_RED_PIN, LED2_GRN_PIN, LOW, HIGH);
+      if (LED2_MODE == 5) {
+        // --- MODE 5: Gammatronix Green Flashing System ---
+        if (averageVoltage >= V_MODE5_GREEN_SOLID) {
+          // Solid Green (>= 12.8V)
+          setLED(LED2_RED_PIN, LED2_GRN_PIN, LOW, HIGH);
+
+        } else if (averageVoltage >= V_MODE5_GREEN_SLOW_FLASH) {
+          // Slow Flashing Green (12.5V - <12.8V)
+          if (isSlowFlash()) {
+            setLED(LED2_RED_PIN, LED2_GRN_PIN, LOW, HIGH);
+          }
+
+        } else {
+          // Fast Flashing Green (12.1V - <12.5V)
+          if (isFastFlash()) {
+            setLED(LED2_RED_PIN, LED2_GRN_PIN, LOW, HIGH);
+          }
+        }
+
+      } else {
+        // Healthy Battery (12.1V - 13.2V): Solid Green
+        setLED(LED2_RED_PIN, LED2_GRN_PIN, LOW, HIGH);
+      }
 
     } else if (averageVoltage >= V_YELLOW) {
       // Yellow (11.8V - 12.1V): Solid Yellow/Orange
