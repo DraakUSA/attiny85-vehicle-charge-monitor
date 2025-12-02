@@ -89,8 +89,8 @@ void setup() {
 
 // Helper function to set LED color
 void setLED(int redPin, int greenPin, int redVal, int greenVal) {
-  analogWrite(redPin, redVal);
-  analogWrite(greenPin, greenVal);
+  digitalWrite(redPin, redVal);
+  digitalWrite(greenPin, greenVal);
 }
 
 // Helper function for slow flashing
@@ -108,43 +108,43 @@ void ledTest() {
   const int TEST_DELAY = 300; // ms per step
 
   // Ensure all off
-  setLED(LED1_RED_PIN, LED1_GRN_PIN, 0, 0);
-  setLED(LED2_RED_PIN, LED2_GRN_PIN, 0, 0);
+  setLED(LED1_RED_PIN, LED1_GRN_PIN, LOW, LOW);
+  setLED(LED2_RED_PIN, LED2_GRN_PIN, LOW, LOW);
   delay(TEST_DELAY);
 
   // LED1: Red, Green, Yellow
-  setLED(LED1_RED_PIN, LED1_GRN_PIN, 255, 0);
+  setLED(LED1_RED_PIN, LED1_GRN_PIN, HIGH, LOW);
   delay(TEST_DELAY);
-  setLED(LED1_RED_PIN, LED1_GRN_PIN, 0, 255);
+  setLED(LED1_RED_PIN, LED1_GRN_PIN, LOW, HIGH);
   delay(TEST_DELAY);
-  setLED(LED1_RED_PIN, LED1_GRN_PIN, YELLOW_R, YELLOW_G);
+  setLED(LED1_RED_PIN, LED1_GRN_PIN, HIGH, HIGH);
   delay(TEST_DELAY);
-  setLED(LED1_RED_PIN, LED1_GRN_PIN, 0, 0);
+  setLED(LED1_RED_PIN, LED1_GRN_PIN, LOW, LOW);
   delay(TEST_DELAY / 2);
 
   // LED2: Red, Green, Yellow
-  setLED(LED2_RED_PIN, LED2_GRN_PIN, 255, 0);
+  setLED(LED2_RED_PIN, LED2_GRN_PIN, HIGH, LOW);
   delay(TEST_DELAY);
-  setLED(LED2_RED_PIN, LED2_GRN_PIN, 0, 255);
+  setLED(LED2_RED_PIN, LED2_GRN_PIN, LOW, HIGH);
   delay(TEST_DELAY);
-  setLED(LED2_RED_PIN, LED2_GRN_PIN, YELLOW_R, YELLOW_G);
+  setLED(LED2_RED_PIN, LED2_GRN_PIN, HIGH, HIGH);
   delay(TEST_DELAY);
-  setLED(LED2_RED_PIN, LED2_GRN_PIN, 0, 0);
+  setLED(LED2_RED_PIN, LED2_GRN_PIN, LOW, LOW);
   delay(TEST_DELAY / 2);
 
   // Flash both yellow twice (on/off cycles)
   for (int i = 0; i < 2; i++) {
-    setLED(LED1_RED_PIN, LED1_GRN_PIN, YELLOW_R, YELLOW_G);
-    setLED(LED2_RED_PIN, LED2_GRN_PIN, YELLOW_R, YELLOW_G);
+    setLED(LED1_RED_PIN, LED1_GRN_PIN, HIGH, HIGH);
+    setLED(LED2_RED_PIN, LED2_GRN_PIN, HIGH, HIGH);
     delay(TEST_DELAY);
-    setLED(LED1_RED_PIN, LED1_GRN_PIN, 0, 0);
-    setLED(LED2_RED_PIN, LED2_GRN_PIN, 0, 0);
+    setLED(LED1_RED_PIN, LED1_GRN_PIN, LOW, LOW);
+    setLED(LED2_RED_PIN, LED2_GRN_PIN, LOW, LOW);
     delay(TEST_DELAY);
   }
 
   // Ensure all off at end
-  setLED(LED1_RED_PIN, LED1_GRN_PIN, 0, 0);
-  setLED(LED2_RED_PIN, LED2_GRN_PIN, 0, 0);
+  setLED(LED1_RED_PIN, LED1_GRN_PIN, LOW, LOW);
+  setLED(LED2_RED_PIN, LED2_GRN_PIN, LOW, LOW);
   delay(TEST_DELAY / 2);
 }
 
@@ -196,7 +196,7 @@ void loop() {
     } else if (averageVoltage > V_HIGH_CHARGE) {
       // High Charging (14.8V - 15.0V): Alternating Yellow/Green Flash
       if (isSlowFlash()) {
-        setLED(LED1_RED_PIN, LED1_GRN_PIN, YELLOW_R, YELLOW_G);
+        setLED(LED1_RED_PIN, LED1_GRN_PIN, HIGH, HIGH);
       } else {
         setLED(LED1_RED_PIN, LED1_GRN_PIN, LOW, HIGH);
       }
@@ -250,12 +250,12 @@ void loop() {
 
     } else if (averageVoltage >= V_YELLOW) {
       // Yellow (11.8V - 12.1V): Solid Yellow/Orange
-      setLED(LED2_RED_PIN, LED2_GRN_PIN, YELLOW_R, YELLOW_G);
+      setLED(LED2_RED_PIN, LED2_GRN_PIN, HIGH, HIGH);
 
     } else if (averageVoltage >= V_YELLOW_FLASH) {
       // Yellow Flash (11.5V - 11.8V): Flashing Yellow/Orange
       if (isSlowFlash()) {
-        setLED(LED2_RED_PIN, LED2_GRN_PIN, YELLOW_R, YELLOW_G);
+        setLED(LED2_RED_PIN, LED2_GRN_PIN, HIGH, HIGH);
       }
 
     } else if (averageVoltage >= V_ALT_YEL_RED) {
@@ -263,7 +263,7 @@ void loop() {
       if (isFastFlash()) {
         setLED(LED2_RED_PIN, LED2_GRN_PIN, HIGH, LOW);
       } else {
-        setLED(LED2_RED_PIN, LED2_GRN_PIN, YELLOW_R, YELLOW_G);
+        setLED(LED2_RED_PIN, LED2_GRN_PIN, HIGH, HIGH);
       }
 
     } else if (averageVoltage >= V_RED_SOLID) {
