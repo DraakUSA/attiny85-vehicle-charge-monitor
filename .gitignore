@@ -42,3 +42,4 @@
 
 # Ignore hardware folder (local CAD/board files)
 hardware/
+wokwi/
