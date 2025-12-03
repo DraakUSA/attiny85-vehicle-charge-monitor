@@ -48,34 +48,61 @@ The analog input is calibrated for a **VCC = 5.0V** reference. The code uses the
 
 ---
 
-## 🎯 Operational Logic and Thresholds
+## 🎯 Updated Operational Logic and Thresholds
 
-The code implements a mutually exclusive logic based on the $13.5V$ charging threshold:
+The code implements a parallel logic, allowing both LEDs to indicate status simultaneously:
 
-* **LED 1 (Charging Indicator)** is active when $\mathbf{Voltage \ge 13.5V}$ (Mode 2).
-* **LED 2 (Battery Monitor)** is active when $\mathbf{Voltage < 13.5V}$ (Mode 1).
+* **LED 1 (Charging Indicator) is Active when:** The system is monitoring alternator output, which is typically any time the **engine is running** (or when $\mathbf{V > 12.1V}$, confirming the battery is not dead).
+* **LED 2 (Battery Monitor) is Active when:** The system is monitoring the battery's state of charge (SoC), which is typically when the **engine is off** or when **voltage drops below the optimal charging threshold ($\mathbf{13.5V}$)**.
+
+### 🔌 Indicator Activation Logic
+
+| Indicator | Activation Condition | Rationale |
+| :--- | :--- | :--- |
+| **LED 1 (Charging Status)** | $\mathbf{V > 12.1V}$ **AND Engine Running** | Active only when the engine is running to monitor the alternator's true output status. Ignored otherwise. |
+| **LED 2 (Battery Monitor)** | **$\mathbf{V < 13.5V}$** | Active when the engine is off or when the system is not fully charging. **Turns OFF when $\mathbf{V \ge 13.5V}$** (to signal the alternator is fully handling power). |
+
+### ⚠️ Overlap and Interpretation
+
+Since both LEDs can be active simultaneously, the user must interpret the two lights together:
+
+* **Scenario 1 (Good):** **LED 1 is Solid Green** ($13.5\text{V} \to 14.8\text{V}$) AND **LED 2 is OFF**.
+    * 👉 **System is healthy and charging is optimal.** The alternator is performing correctly, and the battery monitor is inactive.
+* **Scenario 2 (Weak):** **LED 1 is Solid Yellow** ($12.8\text{V} \to 13.5\text{V}$) AND **LED 2 is Solid Green**.
+    * 👉 **Alternator is weak/undercharging.** The voltage is too low for optimal charge, but the battery is still healthy.
+* **Scenario 3 (Failure):** **LED 1 is Solid Red** ($12.1\text{V} \to 12.8\text{V}$) AND **LED 2 is Solid/Flashing Green**.
+    * 👉 **Alternator has failed.** The system is running entirely on the battery, but the battery is still above the critical low charge threshold.
+* **Scenario 4 (Critical):** **LED 1 is OFF** ($\le 12.1\text{V}$) AND **LED 2 is Solid/Flashing Yellow/Red**.
+    * 👉 **Alternator failed AND the battery is critically discharged.** Battery is below $50\%\text{ SoC}$; there is risk of permanent damage and system failure.
+* **Scenario 5 (High-Charge):** **LED 1 is Alternating Yellow/Green** ($14.8\text{V} \to 15.0\text{V}$) AND **LED 2 is OFF**.
+    * 👉 **Regulator Warning.** Alternator output is elevated and near the safe limit. **Monitor closely; high voltage detected.**
+* **Scenario 6 (Over-Voltage):** **LED 1 is Alternating Red/Green Flash (Fast)** ($> 15.0\text{V}$) AND **LED 2 is OFF**.
+    * 👉 **CRITICAL FAILURE.** The voltage regulator has failed, posing a **risk of immediate battery and electronics damage.** Stop driving immediately.
 
 **Configuration Notes:**
-- Voltage thresholds are calibrated based on Gammatronix reference behavior but customized for this implementation.
-- LED2 can operate in **MODE 1** (default, yellow/red thresholds) or **MODE 5** (green flash thresholds). Set `LED2_MODE` constant in the code to select.
-- All threshold values are user-adjustable in the source code for fine-tuning to specific vehicle requirements.
 
-| Voltage Range (V) | Active LED | State (LED Action) | Meaning (Gammatronix Emulation) |
+* Voltage thresholds are calibrated based on Gammatronix reference behavior but customized for this implementation.
+* LED 2 can operate in simple (**MODE 1**) or detailed (**MODE 5**). Set `LED2_MODE` constant in the code to select.
+* All threshold values are user-adjustable in the source code for fine-tuning to specific vehicle requirements.
+
+| Voltage Range (V) | Active LED | State (LED Action) | Meaning |
 | :--- | :--- | :--- | :--- |
+| <td colspan="4" align="center">**Charging Status Indicator**</td> |
 | **$> 15.0V$** | **LED 1** | Alternating R/G Flash (Fast) | **Over-Voltage Warning / Alternator Fault** |
 | **$14.8V \to 15.0V$** | **LED 1** | Alternating Yellow/Green (Slow) | High-charge band — elevated alternator output |
 | **$13.5V \to 14.8V$** | **LED 1** | Solid Green | Normal Charging (Alternator OK) |
-| **$12.8V \to 13.5V$** | **LED 1** | Slow Green Flash | Low-charge indication (LED1 slow green flash when voltage is between `V_LOW_CHARGE` and the charging threshold; may appear alongside LED2 indications) |
-| **$12.8V \to 13.5V$** | **LED 2** | Solid Green (MODE 5) / Solid Green (MODE 1 for 12.1V+) | Battery healthy (MODE 5 shows solid green in this top band) |
-| **$12.5V \to 12.8V$** | **LED 2** | Slow Green Flash (MODE 5) | MODE 5: slow green flash band |
-| **$12.1V \to 12.5V$** | **LED 2** | Fast Green Flash (MODE 5) / Solid Green (MODE 1) | MODE 5: fast green flash; MODE 1: solid green (12.1V+) |
-| **$11.8V \to 12.1V$** | **LED 2** | Solid Yellow/Orange | Battery Discharge Warning (Mode 1 Yellow) |
+| **$12.8V \to 13.5V$** | **LED 1** | Solid Yellow/Orange | Low-charge indication (Alternator Weak) |
+| **$12.1V \to 12.8V$** | **LED 1** | Solid Red | **Alternator Failure / Running on Battery Power** |
+| <td colspan="4" align="center">**Battery Status Indicator**</td> |
+| **$12.7V \to 13.5V$** | **LED 2** | Solid Green | **Battery Fully Charged / Optimal Resting** |
+| **$12.4V \to 12.7V$** | **LED 2** | Slow Green Flash (MODE 5) / Solid Green (MODE 1) | **High Charge** (Standard 100% resting voltage) - MODE 5: slow green flash band; MODE 1: solid green (12.1V+) |
+| **$12.1V \to 12.4V$** | **LED 2** | Fast Green Flash (MODE 5) / Solid Green (MODE 1) | **Acceptable Charge** (Still above 75% SoC) - MODE 5: fast green flash; MODE 1: solid green |
+| **$11.8V \to 12.1V$** | **LED 2** | Solid Yellow/Orange | **LED 1 Turns OFF Here.** Battery Discharge Warning (Mode 1 Yellow) |
 | **$11.5V \to 11.8V$** | **LED 2** | Yellow/Orange Flash (Slow) | Low Battery Capacity Warning |
 | **$11.2V \to 11.5V$** | **LED 2** | Alternating Yellow/Red Flash (Fast) | **Critical Low Voltage** |
 | **$11.0V \to 11.2V$** | **LED 2** | Solid Red | Battery Discharged / Near Dead |
 | **$10.7V \to 11.0V$** | **LED 2** | Red Flash (Slow) | Dangerously Low Battery |
 | **$< 10.7V$** | **LED 2** | Red Flash (Fast) | **Emergency Stop / System Voltage Too Low** |
-
 ---
 
 ## 💻 Arduino Code (Core Logic)
