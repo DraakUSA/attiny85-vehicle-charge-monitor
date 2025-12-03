@@ -35,18 +35,18 @@ const float ADC_MAX = 1023.0;
 // Set to 5 for MODE 5 (Gammatronix: Green flash thresholds)
 const int LED2_MODE = 5;  // Change to 5 for MODE 5 behavior
 
-// --- MODE 1Charging voltages ---
+// --- MODE 2 Charging voltages ---
 const float V_OVER_CHARGE = 15.0;
 const float V_HIGH_CHARGE = 14.8;
 const float V_CHARGING_OK = 13.5;
 const float V_LOW_CHARGE  = 12.8;
 
 // --- MODE 5 Green Thresholds (Gammatronix 6-mode system) ---
-const float V_MODE5_GREEN_SOLID = 12.8;       // Solid green at/above 12.8V
-const float V_MODE5_GREEN_SLOW_FLASH = 12.5;  // Slow green flash from 12.5V up to <12.8V
-const float V_MODE5_GREEN_FAST_FLASH = 12.1;  // Fast green flash from 12.1V up to <12.5V
+const float V_MODE5_GREEN_SOLID = 12.7;       // Solid green at/above 12.7V
+const float V_MODE5_GREEN_SLOW_FLASH = 12.4;  // Slow green flash from 12.4V up to <12.7V
+const float V_MODE5_GREEN_FAST_FLASH = 12.1;  // Fast green flash from 12.1V up to <12.4V
 
-// --- MODE2 Battery voltages ---
+// --- MODE 1 Battery voltages ---
 const float V_BATT_GREEN  = 12.1;
 const float V_YELLOW      = 11.8;
 const float V_YELLOW_FLASH= 11.5;
@@ -239,11 +239,13 @@ void loop() {
   // ====================================================================
   else {
 
-    // --- LOW CHARGE INDICATION (LED 1 - Flashing Green) ---
+    // --- LOW CHARGE INDICATION (LED 1) ---
     if (averageVoltage >= V_LOW_CHARGE) {
-      if (isSlowFlash()) {
-        setChargingLED(GREEN);
-      }
+      // Weak/Under Charge (12.8V - 13.5V): Yellow
+      setChargingLED(YELLOW);
+    } else if (averageVoltage >= V_BATT_GREEN) {
+      // Severe/Failure (12.1V - <12.8V): Red
+      setChargingLED(RED);
     }
 
     // Battery Voltage Indication (LED 2)
@@ -251,17 +253,17 @@ void loop() {
       if (LED2_MODE == 5) {
         // --- MODE 5: Gammatronix Green Flashing System ---
         if (averageVoltage >= V_MODE5_GREEN_SOLID) {
-          // Solid Green (>= 12.8V)
+          // Solid Green (>= 12.7V)
           setBatteryLED(GREEN);
 
         } else if (averageVoltage >= V_MODE5_GREEN_SLOW_FLASH) {
-          // Slow Flashing Green (12.5V - <12.8V)
+          // Slow Flashing Green (12.4V - <12.7V)
           if (isSlowFlash()) {
             setBatteryLED(GREEN);
           }
 
         } else {
-          // Fast Flashing Green (12.1V - <12.5V)
+          // Fast Flashing Green (12.1V - <12.4V)
           if (isFastFlash()) {
             setBatteryLED(GREEN);
           }
